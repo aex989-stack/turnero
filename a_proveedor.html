@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solicitar Turno de Entrega</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f4f6fb;
+    --surface: #ffffff;
+    --surface2: #f0f2f8;
+    --border: #dde1ef;
+    --accent: #5b4fcf;
+    --accent2: #3d9cf0;
+    --success: #2ecc8e;
+    --danger: #e05060;
+    --text: #1a1d2e;
+    --muted: #7a809a;
+    --font: 'Syne', sans-serif;
+    --mono: 'DM Mono', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: var(--font); min-height: 100vh; }
+
+  header {
+    background: var(--accent);
+    padding: 1.2rem 2rem;
+    display: flex; align-items: center; gap: 12px;
+    color: white;
+  }
+  .logo-icon { width: 36px; height: 36px; background: rgba(255,255,255,0.2); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
+  .logo-text { font-size: 1.1rem; font-weight: 800; }
+  .logo-sub { font-size: 0.75rem; opacity: 0.7; }
+
+  main { max-width: 720px; margin: 2rem auto; padding: 0 1rem 4rem; }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+  }
+  .card-title {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--accent);
+    font-weight: 800;
+    margin-bottom: 1.2rem;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .card-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  .form-grid { display: grid; gap: 1rem; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .field label {
+    display: block;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--muted);
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+  .field input, .field select, .field textarea {
+    width: 100%;
+    background: var(--surface2);
+    border: 1.5px solid var(--border);
+    border-radius: 9px;
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 0.88rem;
+    padding: 10px 14px;
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .field input:focus, .field select:focus, .field textarea:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(91,79,207,0.1);
+  }
+  .field.required label::after { content: ' *'; color: var(--danger); }
+
+  /* MATRICULAS */
+  .matriculas-header {
+    display: grid;
+    grid-template-columns: 1fr 120px 100px 36px;
+    gap: 8px;
+    margin-bottom: 6px;
+    padding: 0 2px;
+  }
+  .matriculas-header span {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--muted);
+    font-weight: 700;
+  }
+  .matricula-row {
+    display: grid;
+    grid-template-columns: 1fr 120px 100px 36px;
+    gap: 8px;
+    margin-bottom: 8px;
+    align-items: center;
+  }
+  .matricula-row input {
+    background: var(--surface2);
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 0.82rem;
+    padding: 8px 10px;
+    outline: none;
+    transition: border-color 0.15s;
+    width: 100%;
+  }
+  .matricula-row input:focus { border-color: var(--accent); }
+  .btn-remove {
+    width: 34px; height: 34px;
+    background: none;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 1rem;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s;
+  }
+  .btn-remove:hover { border-color: var(--danger); color: var(--danger); background: rgba(224,80,96,0.05); }
+  .btn-add {
+    background: none;
+    border: 1.5px dashed var(--border);
+    border-radius: 8px;
+    color: var(--muted);
+    font-family: var(--font);
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 8px 16px;
+    cursor: pointer;
+    width: 100%;
+    transition: all 0.15s;
+    margin-top: 4px;
+  }
+  .btn-add:hover { border-color: var(--accent); color: var(--accent); background: rgba(91,79,207,0.04); }
+
+  .total-pallets {
+    background: var(--surface2);
+    border-radius: 10px;
+    padding: 12px 16px;
+    display: flex; justify-content: space-between; align-items: center;
+    margin-top: 8px;
+  }
+  .total-label { font-size: 0.78rem; color: var(--muted); font-weight: 600; }
+  .total-value { font-size: 1.4rem; font-weight: 800; color: var(--accent); font-family: var(--mono); }
+
+  .btn-submit {
+    width: 100%;
+    background: var(--accent);
+    color: white;
+    border: none;
+    padding: 14px;
+    border-radius: 10px;
+    font-family: var(--font);
+    font-size: 1rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .btn-submit:hover { background: #4a3eaf; transform: translateY(-1px); box-shadow: 0 4px 16px rgba(91,79,207,0.3); }
+  .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+  /* SUCCESS */
+  .success-screen {
+    display: none;
+    text-align: center;
+    padding: 3rem 2rem;
+  }
+  .success-screen.show { display: block; }
+  .success-icon { font-size: 4rem; margin-bottom: 1rem; }
+  .success-title { font-size: 1.5rem; font-weight: 800; margin-bottom: 0.5rem; }
+  .success-sub { color: var(--muted); font-size: 0.9rem; margin-bottom: 1.5rem; }
+  .turno-number {
+    background: var(--surface2);
+    border-radius: 12px;
+    padding: 1rem 2rem;
+    display: inline-block;
+    margin-bottom: 1.5rem;
+  }
+  .turno-number .label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); }
+  .turno-number .number { font-size: 1.8rem; font-weight: 800; color: var(--accent); font-family: var(--mono); }
+  .btn-new {
+    background: var(--surface2);
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 24px;
+    font-family: var(--font);
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    color: var(--text);
+    transition: all 0.15s;
+  }
+  .btn-new:hover { border-color: var(--accent); color: var(--accent); }
+
+  .error-msg { color: var(--danger); font-size: 0.78rem; margin-top: 4px; display: none; }
+  .error-msg.show { display: block; }
+
+  .note {
+    background: rgba(91,79,207,0.06);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 8px 8px 0;
+    padding: 10px 14px;
+    font-size: 0.8rem;
+    color: var(--muted);
+    margin-bottom: 1rem;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-icon">🚛</div>
+  <div>
+    <div class="logo-text">Centro de Distribución</div>
+    <div class="logo-sub">Solicitud de Turno de Entrega</div>
+  </div>
+</header>
+
+<main>
+  <!-- FORM -->
+  <div id="formSection">
+    <div class="note">
+      📋 Completá el formulario con los datos de tu entrega. Una vez enviado, el centro de distribución revisará tu solicitud y te notificará por mail.
+    </div>
+
+    <!-- DATOS PROVEEDOR -->
+    <div class="card">
+      <div class="card-title">Datos del Proveedor</div>
+      <div class="form-grid">
+        <div class="form-row">
+          <div class="field required">
+            <label>Empresa / Proveedor</label>
+            <input type="text" id="fProveedor" placeholder="Nombre de la empresa">
+          </div>
+          <div class="field required">
+            <label>Contacto</label>
+            <input type="text" id="fContacto" placeholder="Nombre y teléfono">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="field required">
+            <label>Email</label>
+            <input type="email" id="fEmail" placeholder="correo@empresa.com">
+          </div>
+          <div class="field required">
+            <label>N° de Toma de Materiales</label>
+            <input type="text" id="fToma" placeholder="Ej: TM-2024-001">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PREFERENCIA DE TURNO -->
+    <div class="card">
+      <div class="card-title">Preferencia de Turno</div>
+      <div class="form-grid">
+        <div class="form-row">
+          <div class="field required">
+            <label>Día preferido</label>
+            <select id="fDia">
+              <option value="">Seleccionar día</option>
+              <option value="0">Lunes</option>
+              <option value="1">Martes</option>
+              <option value="2">Miércoles</option>
+              <option value="3">Jueves</option>
+              <option value="4">Viernes</option>
+            </select>
+          </div>
+          <div class="field required">
+            <label>Horario preferido</label>
+            <select id="fHorario">
+              <option value="">Seleccionar horario</option>
+              <option>07:00</option><option>08:00</option><option>09:00</option>
+              <option>10:00</option><option>11:00</option><option>12:00</option>
+              <option>13:00</option><option>14:00</option><option>15:00</option>
+              <option>16:00</option><option>17:00</option><option>18:00</option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label>Observaciones</label>
+          <textarea id="fObs" rows="2" placeholder="Indicaciones especiales, restricciones de acceso, etc."></textarea>
+        </div>
+      </div>
+    </div>
+
+    <!-- MATRICULAS -->
+    <div class="card">
+      <div class="card-title">Matrículas a Entregar</div>
+      <div class="matriculas-header">
+        <span>N° Matrícula *</span>
+        <span>Cantidad (u)</span>
+        <span>Pallets</span>
+        <span></span>
+      </div>
+      <div id="matriculasContainer"></div>
+      <button class="btn-add" onclick="addMatricula()" id="btnAdd">+ Agregar matrícula</button>
+      <div class="total-pallets">
+        <span class="total-label">🔢 Total de pallets</span>
+        <span class="total-value" id="totalPallets">0</span>
+      </div>
+      <div class="error-msg" id="errorMatriculas">Agregá al menos una matrícula</div>
+    </div>
+
+    <button class="btn-submit" onclick="submitForm()" id="btnSubmit">
+      📤 Enviar Solicitud de Turno
+    </button>
+    <div class="error-msg show" id="errorGeneral" style="text-align:center;margin-top:8px;display:none"></div>
+  </div>
+
+  <!-- SUCCESS -->
+  <div class="card success-screen" id="successScreen">
+    <div class="success-icon">✅</div>
+    <div class="success-title">¡Solicitud enviada!</div>
+    <div class="success-sub">Recibirás un mail en <strong id="emailConfirm"></strong> cuando el centro de distribución confirme o rechace tu turno.</div>
+    <div class="turno-number">
+      <div class="label">N° de Solicitud</div>
+      <div class="number" id="solicitudNum"></div>
+    </div>
+    <br>
+    <button class="btn-new" onclick="resetForm()">Hacer otra solicitud</button>
+  </div>
+</main>
+
+<script>
+const SUPABASE_URL = 'https://ofuceljaemzgkoepayrt.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_-jSftb6NaMEuqwz8w2fFjA_3Xiu5LyH';
+const EMAILJS_SERVICE = 'service_aaxzedd';
+const EMAILJS_TEMPLATE = 'template_fyij5qf';
+const EMAILJS_KEY = 'lbhCgyjMBRz2HTMk5';
+
+const DIAS = ['Lunes','Martes','Miércoles','Jueves','Viernes'];
+let matriculaCount = 0;
+
+function addMatricula() {
+  if (matriculaCount >= 10) return;
+  matriculaCount++;
+  const id = 'mat_' + Date.now();
+  const row = document.createElement('div');
+  row.className = 'matricula-row';
+  row.id = id;
+  row.innerHTML = `
+    <input type="text" placeholder="Ej: 28334" class="mat-num">
+    <input type="number" placeholder="500" min="0" class="mat-cant" oninput="updateTotal()">
+    <input type="number" placeholder="3" min="0" class="mat-plt" oninput="updateTotal()">
+    <button class="btn-remove" onclick="removeMatricula('${id}')" title="Eliminar">×</button>
+  `;
+  document.getElementById('matriculasContainer').appendChild(row);
+  if (matriculaCount >= 10) document.getElementById('btnAdd').style.display = 'none';
+  updateTotal();
+}
+
+function removeMatricula(id) {
+  document.getElementById(id).remove();
+  matriculaCount--;
+  document.getElementById('btnAdd').style.display = 'block';
+  updateTotal();
+}
+
+function updateTotal() {
+  const plts = [...document.querySelectorAll('.mat-plt')].reduce((s, i) => s + (parseInt(i.value) || 0), 0);
+  document.getElementById('totalPallets').textContent = plts;
+}
+
+function getMatriculas() {
+  return [...document.querySelectorAll('.matricula-row')].map(row => ({
+    matricula: row.querySelector('.mat-num').value.trim(),
+    cantidad: parseInt(row.querySelector('.mat-cant').value) || 0,
+    pallets: parseInt(row.querySelector('.mat-plt').value) || 0,
+  })).filter(m => m.matricula);
+}
+
+async function submitForm() {
+  const proveedor = document.getElementById('fProveedor').value.trim();
+  const contacto = document.getElementById('fContacto').value.trim();
+  const email = document.getElementById('fEmail').value.trim();
+  const toma = document.getElementById('fToma').value.trim();
+  const dia = document.getElementById('fDia').value;
+  const horario = document.getElementById('fHorario').value;
+  const obs = document.getElementById('fObs').value.trim();
+  const matriculas = getMatriculas();
+
+  if (!proveedor || !email || !toma || dia === '' || !horario) {
+    showError('Completá todos los campos obligatorios (*)');
+    return;
+  }
+  if (matriculas.length === 0) {
+    document.getElementById('errorMatriculas').classList.add('show');
+    return;
+  }
+  document.getElementById('errorMatriculas').classList.remove('show');
+
+  const btn = document.getElementById('btnSubmit');
+  btn.disabled = true;
+  btn.textContent = 'Enviando...';
+
+  const totalPallets = matriculas.reduce((s, m) => s + m.pallets, 0);
+
+  try {
+    // Guardar turno en Supabase
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/turnos`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
+        'Prefer': 'return=representation'
+      },
+      body: JSON.stringify({
+        numero_toma: toma,
+        proveedor,
+        contacto,
+        email_proveedor: email,
+        dia: parseInt(dia),
+        horario,
+        total_pallets: totalPallets,
+        estado: 'pendiente',
+        observaciones: obs
+      })
+    });
+
+    if (!res.ok) throw new Error('Error guardando turno');
+    const [turno] = await res.json();
+
+    // Guardar matrículas
+    await fetch(`${SUPABASE_URL}/rest/v1/matriculas`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_KEY,
+        'Authorization': `Bearer ${SUPABASE_KEY}`,
+      },
+      body: JSON.stringify(matriculas.map(m => ({ ...m, turno_id: turno.id })))
+    });
+
+    // Enviar mail de confirmación al proveedor
+    await emailjs.send(EMAILJS_SERVICE, EMAILJS_TEMPLATE, {
+      email_proveedor: email,
+      proveedor,
+      estado: 'recibida y está pendiente de confirmación',
+      numero_toma: toma,
+      dia: DIAS[parseInt(dia)],
+      horario,
+      mensaje_operador: 'Tu solicitud fue recibida correctamente. En breve el centro de distribución te confirmará el turno asignado.',
+      to_email: email,
+    }, EMAILJS_KEY);
+
+    // Mostrar éxito
+    document.getElementById('emailConfirm').textContent = email;
+    document.getElementById('solicitudNum').textContent = turno.id.slice(0,8).toUpperCase();
+    document.getElementById('formSection').style.display = 'none';
+    document.getElementById('successScreen').classList.add('show');
+
+  } catch (err) {
+    showError('Ocurrió un error al enviar. Intentá nuevamente.');
+    btn.disabled = false;
+    btn.textContent = '📤 Enviar Solicitud de Turno';
+  }
+}
+
+function showError(msg) {
+  const el = document.getElementById('errorGeneral');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+function resetForm() {
+  document.getElementById('formSection').style.display = 'block';
+  document.getElementById('successScreen').classList.remove('show');
+  document.getElementById('fProveedor').value = '';
+  document.getElementById('fContacto').value = '';
+  document.getElementById('fEmail').value = '';
+  document.getElementById('fToma').value = '';
+  document.getElementById('fDia').value = '';
+  document.getElementById('fHorario').value = '';
+  document.getElementById('fObs').value = '';
+  document.getElementById('matriculasContainer').innerHTML = '';
+  matriculaCount = 0;
+  document.getElementById('btnAdd').style.display = 'block';
+  document.getElementById('btnSubmit').disabled = false;
+  document.getElementById('btnSubmit').textContent = '📤 Enviar Solicitud de Turno';
+  document.getElementById('errorGeneral').style.display = 'none';
+  updateTotal();
+}
+
+// Cargar EmailJS
+const s = document.createElement('script');
+s.src = 'https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js';
+s.onload = () => emailjs.init(EMAILJS_KEY);
+document.head.appendChild(s);
+
+// Agregar primera matrícula al cargar
+addMatricula();
+</script>
+</body>
+</html>

@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Panel Operador — Turnero</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #181c27;
+    --surface2: #1f2535;
+    --border: #2a3045;
+    --accent: #f0c040;
+    --accent2: #3d9cf0;
+    --success: #3ecf8e;
+    --warning: #f0a040;
+    --danger: #f05060;
+    --text: #e8ecf4;
+    --muted: #6b7590;
+    --font: 'Syne', sans-serif;
+    --mono: 'DM Mono', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: var(--font); min-height: 100vh; }
+
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+    display: flex; align-items: center; justify-content: space-between;
+    height: 64px; position: sticky; top: 0; z-index: 100;
+  }
+  .logo { display: flex; align-items: center; gap: 10px; font-size: 1.1rem; font-weight: 800; }
+  .logo-icon { width: 32px; height: 32px; background: var(--accent); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 1rem; }
+  .tab-nav { display: flex; gap: 4px; background: var(--surface2); padding: 4px; border-radius: 10px; }
+  .tab-btn { padding: 6px 16px; border: none; border-radius: 7px; background: transparent; color: var(--muted); font-family: var(--font); font-size: 0.82rem; font-weight: 600; cursor: pointer; transition: all 0.15s; }
+  .tab-btn.active { background: var(--accent); color: #111; }
+  .refresh-btn { background: var(--surface2); border: 1px solid var(--border); color: var(--muted); padding: 7px 14px; border-radius: 8px; font-family: var(--font); font-size: 0.78rem; font-weight: 600; cursor: pointer; transition: all 0.15s; }
+  .refresh-btn:hover { color: var(--text); }
+
+  main { max-width: 1300px; margin: 0 auto; padding: 2rem; }
+
+  .stats-row { display: grid; grid-template-columns: repeat(4,1fr); gap: 1rem; margin-bottom: 2rem; }
+  .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.2rem 1.4rem; }
+  .stat-label { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+  .stat-value { font-size: 2rem; font-weight: 800; line-height: 1; }
+  .yellow { color: var(--accent); } .blue { color: var(--accent2); } .green { color: var(--success); } .orange { color: var(--warning); }
+
+  .view { display: none; } .view.active { display: block; }
+
+  /* PENDING LIST */
+  .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+  .section-title { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1.5px; color: var(--muted); font-weight: 700; }
+
+  .pending-list { display: flex; flex-direction: column; gap: 10px; }
+  .pending-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.2rem 1.4rem;
+    border-left: 3px solid var(--warning);
+    cursor: pointer;
+    transition: border-color 0.15s, transform 0.1s;
+  }
+  .pending-card:hover { border-color: var(--accent); transform: translateX(3px); }
+  .pending-card.confirmado { border-left-color: var(--accent2); }
+  .pending-card.rechazado { border-left-color: var(--danger); opacity: 0.6; }
+  .pending-card.recibido { border-left-color: var(--success); }
+
+  .pc-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+  .pc-provider { font-size: 1rem; font-weight: 800; }
+  .pc-toma { font-family: var(--mono); font-size: 0.75rem; color: var(--muted); }
+  .status-badge { display: inline-flex; align-items: center; gap: 5px; padding: 4px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; }
+  .badge-pendiente { background: rgba(240,160,64,0.12); color: var(--warning); }
+  .badge-confirmado { background: rgba(61,156,240,0.12); color: var(--accent2); }
+  .badge-recibido { background: rgba(62,207,142,0.12); color: var(--success); }
+  .badge-rechazado { background: rgba(240,80,96,0.12); color: var(--danger); }
+
+  .pc-details { display: grid; grid-template-columns: repeat(4,1fr); gap: 1rem; }
+  .pc-detail-item .label { font-size: 0.65rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 2px; }
+  .pc-detail-item .value { font-size: 0.85rem; font-weight: 600; }
+
+  .pc-matriculas { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); display: flex; flex-wrap: wrap; gap: 6px; }
+  .mat-chip { background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 3px 8px; font-family: var(--mono); font-size: 0.72rem; color: var(--muted); }
+
+  /* SCHEDULE */
+  .schedule-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+  .week-nav { display: flex; align-items: center; gap: 12px; }
+  .week-nav button { background: var(--surface2); border: 1px solid var(--border); color: var(--text); width: 32px; height: 32px; border-radius: 8px; cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; }
+  .week-label { font-weight: 700; font-size: 0.9rem; }
+  .grid-container { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
+  .grid-table { width: 100%; border-collapse: collapse; }
+  .grid-table th { background: var(--surface2); padding: 10px 14px; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); font-weight: 700; border-bottom: 1px solid var(--border); text-align: center; }
+  .grid-table td { border: 1px solid var(--border); padding: 5px; vertical-align: top; height: 70px; }
+  .grid-table td.time-cell { font-family: var(--mono); font-size: 0.72rem; color: var(--muted); background: var(--surface2); text-align: center; vertical-align: middle; width: 80px; }
+  .slot-card { background: var(--surface2); border-radius: 6px; padding: 4px 7px; cursor: pointer; border-left: 3px solid var(--accent2); margin-bottom: 3px; }
+  .slot-card.pendiente { border-left-color: var(--warning); }
+  .slot-card.confirmado { border-left-color: var(--accent2); }
+  .slot-card.recibido { border-left-color: var(--success); }
+  .slot-card.rechazado { border-left-color: var(--danger); opacity: 0.5; }
+  .slot-provider { font-size: 0.7rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .slot-detail { font-size: 0.62rem; color: var(--muted); font-family: var(--mono); }
+
+  /* MODAL */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 999; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+  .modal { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 2rem; width: 580px; max-width: 95vw; max-height: 90vh; overflow-y: auto; transform: translateY(12px); transition: transform 0.2s; }
+  .modal-overlay.open .modal { transform: translateY(0); }
+  .modal-title { font-size: 1.1rem; font-weight: 800; margin-bottom: 1.5rem; display: flex; align-items: center; justify-content: space-between; }
+  .modal-close { background: none; border: none; color: var(--muted); font-size: 1.4rem; cursor: pointer; }
+
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; }
+  .info-item .label { font-size: 0.65rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+  .info-item .value { font-size: 0.9rem; font-weight: 600; }
+
+  .mat-table { width: 100%; border-collapse: collapse; margin-bottom: 1.5rem; }
+  .mat-table th { background: var(--surface2); padding: 8px 12px; font-size: 0.68rem; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); font-weight: 700; text-align: left; }
+  .mat-table td { padding: 8px 12px; border-bottom: 1px solid var(--border); font-size: 0.85rem; font-family: var(--mono); }
+
+  .assign-section { background: var(--surface2); border-radius: 12px; padding: 1.2rem; margin-bottom: 1.5rem; }
+  .assign-title { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); font-weight: 700; margin-bottom: 1rem; }
+  .assign-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .field label { display: block; font-size: 0.68rem; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); font-weight: 700; margin-bottom: 5px; }
+  .field select, .field textarea, .field input { width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: var(--font); font-size: 0.85rem; padding: 8px 12px; outline: none; transition: border-color 0.15s; }
+  .field select:focus, .field textarea:focus { border-color: var(--accent); }
+
+  .action-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .btn { padding: 11px; border-radius: 9px; border: none; font-family: var(--font); font-size: 0.85rem; font-weight: 700; cursor: pointer; transition: all 0.15s; text-align: center; }
+  .btn-confirm { background: var(--success); color: #0a2a1a; }
+  .btn-confirm:hover { background: #5aeaaa; }
+  .btn-reject { background: rgba(240,80,96,0.15); color: var(--danger); border: 1px solid rgba(240,80,96,0.3); }
+  .btn-reject:hover { background: rgba(240,80,96,0.25); }
+  .btn-received { background: var(--accent2); color: #0a1a2a; }
+  .btn-received:hover { background: #5dbaff; }
+  .btn-close { background: var(--surface2); color: var(--muted); border: 1px solid var(--border); }
+
+  .loading { text-align: center; padding: 3rem; color: var(--muted); font-size: 0.9rem; }
+  .empty-state { text-align: center; padding: 3rem; color: var(--muted); }
+  .empty-state .icon { font-size: 2.5rem; margin-bottom: 1rem; }
+
+  .filter-row { display: flex; gap: 8px; margin-bottom: 1.5rem; flex-wrap: wrap; }
+  .filter-btn { padding: 6px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; color: var(--muted); font-family: var(--font); font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: all 0.15s; }
+  .filter-btn.active { background: var(--accent); color: #111; border-color: var(--accent); }
+
+  .obs-box { background: rgba(240,192,64,0.08); border: 1px solid rgba(240,192,64,0.2); border-radius: 8px; padding: 10px 12px; font-size: 0.82rem; color: var(--warning); margin-bottom: 1rem; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">🏭</div>
+    Panel Operador
+  </div>
+  <div class="tab-nav">
+    <button class="tab-btn active" onclick="switchTab('solicitudes', this)">Solicitudes</button>
+    <button class="tab-btn" onclick="switchTab('grilla', this)">Grilla Semanal</button>
+  </div>
+  <button class="refresh-btn" onclick="loadData()">↻ Actualizar</button>
+</header>
+
+<main>
+  <div class="stats-row" id="statsRow">
+    <div class="stat-card"><div class="stat-label">Total</div><div class="stat-value yellow">—</div></div>
+    <div class="stat-card"><div class="stat-label">Pendientes</div><div class="stat-value orange">—</div></div>
+    <div class="stat-card"><div class="stat-label">Confirmados</div><div class="stat-value blue">—</div></div>
+    <div class="stat-card"><div class="stat-label">Recibidos</div><div class="stat-value green">—</div></div>
+  </div>
+
+  <!-- SOLICITUDES -->
+  <div class="view active" id="view-solicitudes">
+    <div class="filter-row">
+      <button class="filter-btn active" onclick="setFilter('all', this)">Todos</button>
+      <button class="filter-btn" onclick="setFilter('pendiente', this)">⏳ Pendiente</button>
+      <button class="filter-btn" onclick="setFilter('confirmado', this)">✓ Confirmado</button>
+      <button class="filter-btn" onclick="setFilter('recibido', this)">📦 Recibido</button>
+      <button class="filter-btn" onclick="setFilter('rechazado', this)">✗ Rechazado</button>
+    </div>
+    <div class="pending-list" id="pendingList">
+      <div class="loading">Cargando solicitudes...</div>
+    </div>
+  </div>
+
+  <!-- GRILLA -->
+  <div class="view" id="view-grilla">
+    <div class="schedule-header">
+      <p class="section-title">Grilla de turnos confirmados</p>
+      <div class="week-nav">
+        <button onclick="changeWeek(-1)">&#8249;</button>
+        <span class="week-label" id="weekLabel"></span>
+        <button onclick="changeWeek(1)">&#8250;</button>
+      </div>
+    </div>
+    <div class="grid-container">
+      <table class="grid-table" id="scheduleGrid"></table>
+    </div>
+  </div>
+</main>
+
+<!-- MODAL DETALLE -->
+<div class="modal-overlay" id="modalOverlay" onclick="handleOverlay(event)">
+  <div class="modal" id="modalContent"></div>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://ofuceljaemzgkoepayrt.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_-jSftb6NaMEuqwz8w2fFjA_3Xiu5LyH';
+const EMAILJS_SERVICE = 'service_aaxzedd';
+const EMAILJS_TEMPLATE = 'template_fyij5qf';
+const EMAILJS_KEY = 'lbhCgyjMBRz2HTMk5';
+const OPERADOR_EMAIL = 'aex989@gmail.com';
+
+const DIAS = ['Lunes','Martes','Miércoles','Jueves','Viernes'];
+const HOURS = ['07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00','18:00'];
+
+let allTurnos = [];
+let currentFilter = 'all';
+let currentWeekOffset = 0;
+
+async function api(path, method = 'GET', body = null) {
+  const opts = {
+    method,
+    headers: {
+      'apikey': SUPABASE_KEY,
+      'Authorization': `Bearer ${SUPABASE_KEY}`,
+      'Content-Type': 'application/json',
+      'Prefer': 'return=representation'
+    }
+  };
+  if (body) opts.body = JSON.stringify(body);
+  const res = await fetch(SUPABASE_URL + path, opts);
+  if (!res.ok) throw new Error(await res.text());
+  const text = await res.text();
+  return text ? JSON.parse(text) : null;
+}
+
+async function loadData() {
+  try {
+    const turnos = await api('/rest/v1/turnos?select=*&order=created_at.desc');
+    const matriculas = await api('/rest/v1/matriculas?select=*');
+    allTurnos = turnos.map(t => ({
+      ...t,
+      matriculas: matriculas.filter(m => m.turno_id === t.id)
+    }));
+    renderStats();
+    renderList();
+    renderGrid();
+  } catch (e) {
+    document.getElementById('pendingList').innerHTML = `<div class="empty-state"><div class="icon">⚠️</div><p>Error cargando datos: ${e.message}</p></div>`;
+  }
+}
+
+function renderStats() {
+  const t = allTurnos.length;
+  const p = allTurnos.filter(x => x.estado === 'pendiente').length;
+  const c = allTurnos.filter(x => x.estado === 'confirmado').length;
+  const r = allTurnos.filter(x => x.estado === 'recibido').length;
+  document.getElementById('statsRow').innerHTML = `
+    <div class="stat-card"><div class="stat-label">Total</div><div class="stat-value yellow">${t}</div></div>
+    <div class="stat-card"><div class="stat-label">Pendientes</div><div class="stat-value orange">${p}</div></div>
+    <div class="stat-card"><div class="stat-label">Confirmados</div><div class="stat-value blue">${c}</div></div>
+    <div class="stat-card"><div class="stat-label">Recibidos</div><div class="stat-value green">${r}</div></div>
+  `;
+}
+
+function renderList() {
+  const filtered = currentFilter === 'all' ? allTurnos : allTurnos.filter(t => t.estado === currentFilter);
+  const container = document.getElementById('pendingList');
+  if (!filtered.length) {
+    container.innerHTML = `<div class="empty-state"><div class="icon">📭</div><p>No hay solicitudes</p></div>`;
+    return;
+  }
+  container.innerHTML = filtered.map(t => `
+    <div class="pending-card ${t.estado}" onclick="openModal('${t.id}')">
+      <div class="pc-header">
+        <div>
+          <div class="pc-provider">${t.proveedor}</div>
+          <div class="pc-toma">Toma: ${t.numero_toma || '—'} · ${t.contacto || ''}</div>
+        </div>
+        <span class="status-badge badge-${t.estado}">${t.estado}</span>
+      </div>
+      <div class="pc-details">
+        <div class="pc-detail-item"><div class="label">Día preferido</div><div class="value">${t.dia !== null && t.dia !== undefined ? DIAS[t.dia] : '—'}</div></div>
+        <div class="pc-detail-item"><div class="label">Horario preferido</div><div class="value">${t.horario || '—'}</div></div>
+        <div class="pc-detail-item"><div class="label">Total pallets</div><div class="value">${t.total_pallets || 0}</div></div>
+        <div class="pc-detail-item"><div class="label">Matrículas</div><div class="value">${t.matriculas.length}</div></div>
+      </div>
+      ${t.matriculas.length ? `<div class="pc-matriculas">${t.matriculas.map(m => `<span class="mat-chip">${m.matricula} · ${m.cantidad}u · ${m.pallets}plt</span>`).join('')}</div>` : ''}
+    </div>
+  `).join('');
+}
+
+function renderGrid() {
+  const dates = getWeekDates(currentWeekOffset);
+  document.getElementById('weekLabel').textContent = `${fmtDate(dates[0])} — ${fmtDate(dates[4])}`;
+  const table = document.getElementById('scheduleGrid');
+  let html = '<thead><tr><th style="width:80px;text-align:left">Hora</th>';
+  dates.forEach((d, i) => { html += `<th>${DIAS[i]}<br><span style="font-weight:400;color:var(--muted)">${fmtDate(d)}</span></th>`; });
+  html += '</tr></thead><tbody>';
+  HOURS.forEach(hour => {
+    html += `<tr><td class="time-cell">${hour}</td>`;
+    for (let d = 0; d < 5; d++) {
+      const slots = allTurnos.filter(t => t.dia === d && t.horario === hour && t.estado !== 'rechazado');
+      html += `<td>${slots.map(t => `<div class="slot-card ${t.estado}" onclick="openModal('${t.id}')"><div class="slot-provider">${t.proveedor}</div><div class="slot-detail">${t.total_pallets}plt · ${t.matriculas.length}mat</div></div>`).join('')}</td>`;
+    }
+    html += '</tr>';
+  });
+  html += '</tbody>';
+  table.innerHTML = html;
+}
+
+function openModal(id) {
+  const t = allTurnos.find(x => x.id === id);
+  if (!t) return;
+  const modal = document.getElementById('modalContent');
+  const canAssign = t.estado === 'pendiente';
+  const canReceive = t.estado === 'confirmado';
+
+  modal.innerHTML = `
+    <div class="modal-title">
+      <span>${t.proveedor} <span class="status-badge badge-${t.estado}">${t.estado}</span></span>
+      <button class="modal-close" onclick="closeModal()">×</button>
+    </div>
+
+    <div class="info-grid">
+      <div class="info-item"><div class="label">N° Toma</div><div class="value">${t.numero_toma || '—'}</div></div>
+      <div class="info-item"><div class="label">Contacto</div><div class="value">${t.contacto || '—'}</div></div>
+      <div class="info-item"><div class="label">Email</div><div class="value">${t.email_proveedor || '—'}</div></div>
+      <div class="info-item"><div class="label">Solicitud</div><div class="value">${new Date(t.created_at).toLocaleString('es-AR')}</div></div>
+      <div class="info-item"><div class="label">Día preferido</div><div class="value">${t.dia !== null ? DIAS[t.dia] : '—'}</div></div>
+      <div class="info-item"><div class="label">Horario preferido</div><div class="value">${t.horario || '—'}</div></div>
+    </div>
+
+    ${t.observaciones ? `<div class="obs-box">📝 ${t.observaciones}</div>` : ''}
+
+    <table class="mat-table">
+      <thead><tr><th>Matrícula</th><th>Cantidad</th><th>Pallets</th></tr></thead>
+      <tbody>
+        ${t.matriculas.map(m => `<tr><td>${m.matricula}</td><td>${m.cantidad}</td><td>${m.pallets}</td></tr>`).join('')}
+        <tr style="font-weight:700;border-top:2px solid var(--border)">
+          <td>TOTAL</td>
+          <td>${t.matriculas.reduce((s,m)=>s+m.cantidad,0)}</td>
+          <td>${t.total_pallets}</td>
+        </tr>
+      </tbody>
+    </table>
+
+    ${canAssign ? `
+    <div class="assign-section">
+      <div class="assign-title">Asignar turno definitivo</div>
+      <div class="assign-row">
+        <div class="field">
+          <label>Día asignado</label>
+          <select id="mDia">
+            ${DIAS.map((d,i) => `<option value="${i}" ${t.dia===i?'selected':''}>${d}</option>`).join('')}
+          </select>
+        </div>
+        <div class="field">
+          <label>Horario asignado</label>
+          <select id="mHorario">
+            ${HOURS.map(h => `<option ${t.horario===h?'selected':''}>${h}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+      <div class="field" style="margin-top:10px">
+        <label>Mensaje al proveedor (opcional)</label>
+        <textarea id="mMensaje" rows="2" placeholder="Indicaciones adicionales..."></textarea>
+      </div>
+    </div>
+    <div class="action-buttons">
+      <button class="btn btn-confirm" onclick="updateEstado('${id}', 'confirmado')">✓ Confirmar turno</button>
+      <button class="btn btn-reject" onclick="updateEstado('${id}', 'rechazado')">✗ Rechazar</button>
+    </div>
+    ` : ''}
+
+    ${canReceive ? `
+    <div class="assign-section">
+      <div class="field">
+        <label>Mensaje al proveedor (opcional)</label>
+        <textarea id="mMensaje" rows="2" placeholder="Observaciones de la recepción..."></textarea>
+      </div>
+    </div>
+    <div class="action-buttons">
+      <button class="btn btn-received" onclick="updateEstado('${id}', 'recibido')">📦 Marcar como recibido</button>
+      <button class="btn btn-close" onclick="closeModal()">Cerrar</button>
+    </div>
+    ` : ''}
+
+    ${!canAssign && !canReceive ? `<button class="btn btn-close" style="width:100%" onclick="closeModal()">Cerrar</button>` : ''}
+  `;
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+async function updateEstado(id, nuevoEstado) {
+  const t = allTurnos.find(x => x.id === id);
+  const dia = document.getElementById('mDia') ? parseInt(document.getElementById('mDia').value) : t.dia;
+  const horario = document.getElementById('mHorario') ? document.getElementById('mHorario').value : t.horario;
+  const mensaje = document.getElementById('mMensaje') ? document.getElementById('mMensaje').value : '';
+
+  if (!confirm(`¿${nuevoEstado === 'confirmado' ? 'Confirmar' : nuevoEstado === 'rechazado' ? 'Rechazar' : 'Marcar como recibido'} este turno?`)) return;
+
+  try {
+    await api(`/rest/v1/turnos?id=eq.${id}`, 'PATCH', {
+      estado: nuevoEstado,
+      dia,
+      horario
+    });
+
+    // Enviar mail al proveedor
+    const estadoTexto = nuevoEstado === 'confirmado' ? 'CONFIRMADO ✅' : nuevoEstado === 'rechazado' ? 'RECHAZADO ❌' : 'RECIBIDO 📦';
+    await emailjs.send(EMAILJS_SERVICE, EMAILJS_TEMPLATE, {
+      email_proveedor: t.email_proveedor,
+      to_email: t.email_proveedor,
+      proveedor: t.proveedor,
+      estado: estadoTexto,
+      numero_toma: t.numero_toma,
+      dia: DIAS[dia],
+      horario,
+      mensaje_operador: mensaje || (nuevoEstado === 'confirmado' ? 'Tu turno fue confirmado. Por favor presentate en el horario indicado.' : nuevoEstado === 'rechazado' ? 'Tu solicitud fue rechazada. Contactate con el centro de distribución para más información.' : 'Tu entrega fue recibida correctamente. Gracias.'),
+    }, EMAILJS_KEY);
+
+    closeModal();
+    await loadData();
+    alert(`Turno ${nuevoEstado} correctamente. Mail enviado a ${t.email_proveedor}`);
+  } catch (e) {
+    alert('Error: ' + e.message);
+  }
+}
+
+function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); }
+function handleOverlay(e) { if (e.target === document.getElementById('modalOverlay')) closeModal(); }
+
+function switchTab(tab, btn) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('view-' + tab).classList.add('active');
+  btn.classList.add('active');
+}
+
+function setFilter(f, btn) {
+  currentFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderList();
+}
+
+function changeWeek(d) { currentWeekOffset += d; renderGrid(); }
+
+function getWeekDates(offset) {
+  const now = new Date();
+  const day = now.getDay();
+  const monday = new Date(now);
+  monday.setDate(now.getDate() - (day === 0 ? 6 : day - 1) + offset * 7);
+  return DIAS.map((_, i) => { const d = new Date(monday); d.setDate(monday.getDate() + i); return d; });
+}
+function fmtDate(d) { return d.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' }); }
+
+// Cargar EmailJS
+const s = document.createElement('script');
+s.src = 'https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js';
+s.onload = () => { emailjs.init(EMAILJS_KEY); loadData(); };
+document.head.appendChild(s);
+</script>
+</body>
+</html>
